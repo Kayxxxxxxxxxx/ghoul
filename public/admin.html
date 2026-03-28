@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SpamRed - Painel Admin</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a0a0a 100%);
+            font-family: monospace;
+            color: #ff3333;
+            padding: 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header {
+            text-align: center;
+            padding: 30px;
+            border-bottom: 2px solid #ff3333;
+            margin-bottom: 30px;
+        }
+        .header h1 { font-size: 2.5em; text-shadow: 0 0 10px #ff3333; }
+        .card {
+            background: rgba(20,20,20,0.9);
+            border: 1px solid #ff3333;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .card h2 { margin-bottom: 15px; border-left: 3px solid #ff3333; padding-left: 10px; }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0 15px 0;
+            background: #2a2a2a;
+            border: 1px solid #ff3333;
+            color: #ff3333;
+            border-radius: 5px;
+        }
+        button {
+            background: #ff3333;
+            color: #0a0a0a;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:hover { background: #ff5555; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #333;
+        }
+        th { background: #1a1a1a; color: #ff8888; }
+        .status-active { color: #00ff00; }
+        .status-revoked { color: #ff3333; }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: #1a1a1a;
+            border: 2px solid #ff3333;
+            border-radius: 10px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+        }
+        .key-display {
+            background: #0a0a0a;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 1.2em;
+            text-align: center;
+            margin: 20px 0;
+            word-break: break-all;
+        }
+        .loading { text-align: center; padding: 20px; color: #888; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔥 SPAMRED PANEL</h1>
+            <p>Sistema de Gerenciamento de Licenças</p>
+        </div>
+        
+        <div class="card">
+            <h2>✨ Criar Nova Licença</h2>
+            <input type="text" id="clientName" placeholder="Nome do Cliente">
+            <input type="number" id="days" value="30" placeholder="Dias">
+            <input type="number" id="maxServers" value="50" placeholder="Max Servidores">
+            <select id="permissions">
+                <option value="all">Todas permissões</option>
+                <option value="basic">Básico (spam, clear)</option>
+                <option value="premium">Premium (tudo)</option>
+            </select>
+            <button onclick="createLicense()">🚀 GERAR LICENÇA</button>
+        </div>
+        
+        <div class="card">
+            <h2>📋 Licenças Ativas</h2>
+            <button onclick="loadLicenses()" style="margin-bottom: 15px;">🔄 Atualizar</button>
+            <div id="licensesList" class="loading">Carregando...</div>
+        </div>
+    </div>
+    
+    <div id="keyModal" class="modal">
+        <div class="modal-content">
+            <h2>✅ Licença Gerada!</h2>
+            <div class="key-display" id="generatedKey"></div>
+            <p><strong>Expira em:</strong> <span id="keyExpires"></span></p>
+            <button onclick="copyKey()">📋 Copiar Chave</button>
+            <button onclick="closeModal()" style="margin-left: 10px;">Fechar</button>
+        </div>
+    </div>
+    
+    <script>
+        const API_URL = '/api';
+        const ADMIN_TOKEN = 'SPAMRED2024';
+        
+        async function apiCall(action, data = {}) {
+            const formData = new URLSearchParams();
+            formData.append('token', ADMIN_TOKEN);
+            for (let key in data) {
+                formData.append(key, data[key]);
+            }
+            
+            const response = await fetch(`${API_URL}?action=${action}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: formData
+            });
+            return await response.json();
+        }
+        
+        async function createLicense() {
+            const client = document.getElementById('clientName').value;
+            const days = document.getElementById('days').value;
+            const max_servers = document.getElementById('maxServers').value;
+            const permissions = document.getElementById('permissions').value;
+            
+            if (!client) {
+                alert('Digite o nome do cliente!');
+                return;
+            }
+            
+            const result = await apiCall('create', { client, days, max_servers, permissions });
+            
+            if (result.success) {
+                document.getElementById('generatedKey').textContent = result.key;
+                document.getElementById('keyExpires').textContent = result.expires;
+                document.getElementById('keyModal').style.display = 'flex';
+                document.getElementById('clientName').value = '';
+                loadLicenses();
+            } else {
+                alert('Erro: ' + (result.error || 'Desconhecido'));
+            }
+        }
+        
+        async function loadLicenses() {
+            const licenses = await apiCall('list');
+            const container = document.getElementById('licensesList');
+            
+            if (!licenses || licenses.error) {
+                container.innerHTML = '<div class="loading">Erro ao carregar</div>';
+                return;
+            }
+            
+            if (licenses.length === 0) {
+                container.innerHTML = '<div class="loading">Nenhuma licença</div>';
+                return;
+            }
+            
+            let html = '  </thead>\n<thead>\n<th>Chave</th><th>Cliente</th><th>Status</th><th>Expira</th><th>Ativada</th>\n</thead>\n<tbody>';
+            licenses.forEach(lic => {
+                let statusClass = lic.status === 'active' ? 'status-active' : 'status-revoked';
+                let statusText = lic.status === 'active' ? 'Ativa' : 'Revogada';
+                html += `\n<tr>\n<td><code>${lic.key}</code></td>\n<td>${lic.client}</td>\n<td class="${statusClass}">${statusText}</td>\n<td>${lic.expires}</td>\n<td>${lic.activated_at ? 'Sim' : 'Não'}</td>\n</tr>`;
+            });
+            html += '\n</tbody>\n</table>';
+            container.innerHTML = html;
+        }
+        
+        function copyKey() {
+            const key = document.getElementById('generatedKey').textContent;
+            navigator.clipboard.writeText(key);
+            alert('Chave copiada!');
+        }
+        
+        function closeModal() {
+            document.getElementById('keyModal').style.display = 'none';
+        }
+        
+        loadLicenses();
+    </script>
+</body>
+</html>
