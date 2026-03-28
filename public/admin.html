@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Ghoul Admin</title>
+    <style>
+        body {
+            background: #0a0a0a;
+            font-family: monospace;
+            color: #ff3333;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .card {
+            background: #1a1a1a;
+            border: 1px solid #ff3333;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            background: #2a2a2a;
+            border: 1px solid #ff3333;
+            color: #ff3333;
+        }
+        button {
+            background: #ff3333;
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #333;
+        }
+        .status-active { color: #0f0; }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background: #1a1a1a;
+            border: 2px solid #ff3333;
+            padding: 20px;
+            text-align: center;
+        }
+        .key-display {
+            background: #000;
+            padding: 15px;
+            margin: 20px 0;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="card">
+        <h1>🔥 GHOUL ADMIN PANEL</h1>
+        <p>API Status: <span id="apiStatus">Verificando...</span></p>
+    </div>
+
+    <div class="card">
+        <h2>📊 Estatísticas</h2>
+        <div>Total: <span id="total">0</span></div>
+        <div>Ativas: <span id="active">0</span></div>
+        <div>Ativadas: <span id="activated">0</span></div>
+    </div>
+
+    <div class="card">
+        <h2>✨ Criar Licença</h2>
+        <input type="text" id="client" placeholder="Nome do Cliente">
+        <input type="number" id="days" value="30" placeholder="Dias">
+        <button onclick="createLicense()">GERAR LICENÇA</button>
+    </div>
+
+    <div class="card">
+        <h2>📋 Licenças</h2>
+        <button onclick="loadLicenses()">Atualizar</button>
+        <div id="licenses">Carregando...</div>
+    </div>
+</div>
+
+<div id="modal" class="modal">
+    <div class="modal-content">
+        <h3>✅ Licença Gerada</h3>
+        <div class="key-display" id="keyDisplay"></div>
+        <button onclick="copyKey()">Copiar</button>
+        <button onclick="closeModal()">Fechar</button>
+    </div>
+</div>
+
+<script>
+    const API = window.location.origin + '/api.php';
+    const TOKEN = 'SPAMRED2024';
+
+    async function apiCall(action, data = {}) {
+        const form = new URLSearchParams();
+        form.append('token', TOKEN);
+        for (let k in data) form.append(k, data[k]);
+        const res = await fetch(`${API}?action=${action}`, { method: 'POST', body: form });
+        return await res.json();
+    }
+
+    async function loadStats() {
+        try {
+            const s = await apiCall('stats');
+            document.getElementById('total').innerText = s.total || 0;
+            document.getElementById('active').innerText = s.active || 0;
+            document.getElementById('activated').innerText = s.activated || 0;
+            document.getElementById('apiStatus').innerHTML = '✅ Online';
+        } catch(e) {
+            document.getElementById('apiStatus').innerHTML = '❌ Offline';
+        }
+    }
+
+    async function loadLicenses() {
+        const lic = await apiCall('list');
+        const div = document.getElementById('licenses');
+        if (!lic || lic.length === 0) {
+            div.innerHTML = 'Nenhuma licença';
+            return;
+        }
+        let html = ' <table> <tr><th>Chave</th><th>Cliente</th><th>Status</th><th>Expira</th></tr>';
+        lic.forEach(l => {
+            html += `<tr><td><code>${l.key}</code></td><td>${l.client}</td><td class="${l.status === 'active' ? 'status-active' : ''}">${l.status}</td><td>${l.expires}</td></tr>`;
+        });
+        div.innerHTML = ` <table>${html}</table>`;
+    }
+
+    async function createLicense() {
+        const client = document.getElementById('client').value;
+        const days = document.getElementById('days').value;
+        if (!client) return alert('Digite o nome do cliente');
+        const res = await apiCall('create', { client, days });
+        if (res.success) {
+            document.getElementById('keyDisplay').innerText = res.key;
+            document.getElementById('modal').style.display = 'flex';
+            loadLicenses();
+            loadStats();
+        } else {
+            alert('Erro: ' + (res.error || 'desconhecido'));
+        }
+    }
+
+    function copyKey() {
+        const key = document.getElementById('keyDisplay').innerText;
+        navigator.clipboard.writeText(key);
+        alert('Chave copiada!');
+    }
+
+    function closeModal() {
+        document.getElementById('modal').style.display = 'none';
+    }
+
+    loadStats();
+    loadLicenses();
+</script>
+</body>
+</html>
