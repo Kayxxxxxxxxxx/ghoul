@@ -1,0 +1,27 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "api.py",
+      "use": "@vercel/python"
+    },
+    {
+      "src": "admin.html",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api.php",
+      "dest": "api.py"
+    },
+    {
+      "src": "/admin.html",
+      "dest": "admin.html"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "api.py"
+    }
+  ]
+}
