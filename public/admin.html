@@ -1,65 +1,129 @@
 <!DOCTYPE html>
-<html lang="pt">
+<html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SpamRed - Painel Admin</title>
+    <title>Ghoul Admin Panel</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
         body {
-            background: linear-gradient(135deg, #0a0a0a 0%, #1a0a0a 100%);
-            font-family: monospace;
-            color: #ff3333;
+            background: #0a0a0a;
+            font-family: 'Courier New', monospace;
+            color: #e0e0e0;
             padding: 20px;
         }
-        .container { max-width: 1200px; margin: 0 auto; }
-        .header {
-            text-align: center;
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .terminal-header {
+            background: #000;
+            border: 1px solid #ff3333;
+            border-radius: 10px 10px 0 0;
+            padding: 10px 20px;
+            display: flex;
+            gap: 10px;
+        }
+        .terminal-dots {
+            display: flex;
+            gap: 8px;
+        }
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        .dot-red { background: #ff5f56; }
+        .dot-yellow { background: #ffbd2e; }
+        .dot-green { background: #27c93f; }
+        .terminal-content {
+            background: rgba(0,0,0,0.9);
+            border: 1px solid #ff3333;
+            border-top: none;
+            border-radius: 0 0 10px 10px;
             padding: 30px;
-            border-bottom: 2px solid #ff3333;
+        }
+        .profile-section {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 40px;
+            padding: 20px;
+            background: rgba(255,51,51,0.05);
+            border-radius: 15px;
+            border: 1px solid rgba(255,51,51,0.3);
+        }
+        .profile-avatar {
+            width: 100px;
+            height: 100px;
+        }
+        .profile-avatar img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 2px solid #ff3333;
+            object-fit: cover;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
             margin-bottom: 30px;
         }
-        .header h1 { font-size: 2.5em; text-shadow: 0 0 10px #ff3333; }
-        .card {
-            background: rgba(20,20,20,0.9);
+        .stat-card {
+            background: rgba(0,0,0,0.8);
             border: 1px solid #ff3333;
             border-radius: 10px;
             padding: 20px;
-            margin-bottom: 20px;
+            text-align: center;
         }
-        .card h2 { margin-bottom: 15px; border-left: 3px solid #ff3333; padding-left: 10px; }
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #ff3333;
+        }
+        .card {
+            background: rgba(0,0,0,0.9);
+            border: 1px solid #ff3333;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 25px;
+        }
         input, select {
             width: 100%;
-            padding: 10px;
-            margin: 5px 0 15px 0;
-            background: #2a2a2a;
+            padding: 12px;
+            margin: 8px 0 20px;
+            background: #1a1a1a;
             border: 1px solid #ff3333;
-            color: #ff3333;
+            color: #fff;
             border-radius: 5px;
         }
         button {
             background: #ff3333;
-            color: #0a0a0a;
+            color: #000;
             border: none;
-            padding: 10px 20px;
+            padding: 12px 24px;
             border-radius: 5px;
             cursor: pointer;
             font-weight: bold;
         }
-        button:hover { background: #ff5555; }
+        button:hover {
+            background: #ff5555;
+        }
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 15px;
         }
         th, td {
             padding: 10px;
             text-align: left;
             border-bottom: 1px solid #333;
         }
-        th { background: #1a1a1a; color: #ff8888; }
-        .status-active { color: #00ff00; }
-        .status-revoked { color: #ff3333; }
+        .status-active { color: #0f0; }
+        .status-revoked { color: #f33; }
         .modal {
             display: none;
             position: fixed;
@@ -70,7 +134,6 @@
             background: rgba(0,0,0,0.9);
             justify-content: center;
             align-items: center;
-            z-index: 1000;
         }
         .modal-content {
             background: #1a1a1a;
@@ -78,136 +141,146 @@
             border-radius: 10px;
             padding: 30px;
             max-width: 500px;
-            width: 90%;
+            text-align: center;
         }
         .key-display {
-            background: #0a0a0a;
+            background: #000;
             padding: 15px;
-            border-radius: 5px;
-            font-family: monospace;
-            font-size: 1.2em;
-            text-align: center;
             margin: 20px 0;
+            font-family: monospace;
             word-break: break-all;
         }
-        .loading { text-align: center; padding: 20px; color: #888; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>🔥 SPAMRED PANEL</h1>
-            <p>Sistema de Gerenciamento de Licenças</p>
+<div class="container">
+    <div class="terminal-header">
+        <div class="terminal-dots">
+            <div class="dot dot-red"></div>
+            <div class="dot dot-yellow"></div>
+            <div class="dot dot-green"></div>
         </div>
-        
+        <div style="color:#ff3333;">ghoul@admin:~</div>
+    </div>
+    <div class="terminal-content">
+        <div class="profile-section">
+            <div class="profile-avatar">
+                <img id="profileImg" src="https://i.imgur.com/9Z9Z9Z9.png" alt="avatar">
+            </div>
+            <div>
+                <h1 style="color:#ff3333;">GHOUL</h1>
+                <p>🔥 Admin Panel v1.0</p>
+                <div style="display:flex; gap:10px; margin-top:10px;">
+                    <span style="background:#ff333320; padding:5px 10px; border-radius:20px;">#Python</span>
+                    <span style="background:#ff333320; padding:5px 10px; border-radius:20px;">#DiscordAPI</span>
+                    <span style="background:#ff333320; padding:5px 10px; border-radius:20px;">#Cybersecurity</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card"><div class="stat-number" id="total">0</div><div>Total Licenças</div></div>
+            <div class="stat-card"><div class="stat-number" id="active">0</div><div>Licenças Ativas</div></div>
+            <div class="stat-card"><div class="stat-number" id="activated">0</div><div>Ativadas</div></div>
+        </div>
+
         <div class="card">
-            <h2>✨ Criar Nova Licença</h2>
+            <h2>✨ GERAR NOVA LICENÇA</h2>
             <input type="text" id="clientName" placeholder="Nome do Cliente">
             <input type="number" id="days" value="30" placeholder="Dias">
             <input type="number" id="maxServers" value="50" placeholder="Max Servidores">
             <select id="permissions">
-                <option value="all">Todas permissões</option>
-                <option value="basic">Básico (spam, clear)</option>
-                <option value="premium">Premium (tudo)</option>
+                <option value="all">Todas Permissões</option>
+                <option value="basic">Básico</option>
             </select>
-            <button onclick="createLicense()">🚀 GERAR LICENÇA</button>
+            <button onclick="createLicense()">GERAR</button>
         </div>
-        
+
         <div class="card">
-            <h2>📋 Licenças Ativas</h2>
-            <button onclick="loadLicenses()" style="margin-bottom: 15px;">🔄 Atualizar</button>
-            <div id="licensesList" class="loading">Carregando...</div>
+            <h2>📋 LICENÇAS</h2>
+            <button onclick="loadLicenses()" style="margin-bottom:15px;">ATUALIZAR</button>
+            <div id="licensesList">Carregando...</div>
         </div>
     </div>
-    
-    <div id="keyModal" class="modal">
-        <div class="modal-content">
-            <h2>✅ Licença Gerada!</h2>
-            <div class="key-display" id="generatedKey"></div>
-            <p><strong>Expira em:</strong> <span id="keyExpires"></span></p>
-            <button onclick="copyKey()">📋 Copiar Chave</button>
-            <button onclick="closeModal()" style="margin-left: 10px;">Fechar</button>
-        </div>
+</div>
+
+<div id="keyModal" class="modal">
+    <div class="modal-content">
+        <h2>✅ Licença Gerada</h2>
+        <div class="key-display" id="generatedKey"></div>
+        <button onclick="copyKey()">Copiar</button>
+        <button onclick="closeModal()" style="margin-left:10px;">Fechar</button>
     </div>
-    
-    <script>
-        const API_URL = '/api';
-        const ADMIN_TOKEN = 'SPAMRED2024';
-        
-        async function apiCall(action, data = {}) {
-            const formData = new URLSearchParams();
-            formData.append('token', ADMIN_TOKEN);
-            for (let key in data) {
-                formData.append(key, data[key]);
-            }
-            
-            const response = await fetch(`${API_URL}?action=${action}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: formData
-            });
-            return await response.json();
+</div>
+
+<script>
+    const API_URL = '/api.php';
+    const ADMIN_TOKEN = 'SPAMRED2024';
+
+    async function apiCall(action, data = {}) {
+        const formData = new URLSearchParams();
+        formData.append('token', ADMIN_TOKEN);
+        for (let k in data) formData.append(k, data[k]);
+        const res = await fetch(`${API_URL}?action=${action}`, {
+            method: 'POST',
+            body: formData
+        });
+        return await res.json();
+    }
+
+    async function loadStats() {
+        const s = await apiCall('stats');
+        document.getElementById('total').innerText = s.total || 0;
+        document.getElementById('active').innerText = s.active || 0;
+        document.getElementById('activated').innerText = s.activated || 0;
+    }
+
+    async function loadLicenses() {
+        const lic = await apiCall('list');
+        const container = document.getElementById('licensesList');
+        if (!lic || lic.length === 0) {
+            container.innerHTML = 'Nenhuma licença';
+            return;
         }
-        
-        async function createLicense() {
-            const client = document.getElementById('clientName').value;
-            const days = document.getElementById('days').value;
-            const max_servers = document.getElementById('maxServers').value;
-            const permissions = document.getElementById('permissions').value;
-            
-            if (!client) {
-                alert('Digite o nome do cliente!');
-                return;
-            }
-            
-            const result = await apiCall('create', { client, days, max_servers, permissions });
-            
-            if (result.success) {
-                document.getElementById('generatedKey').textContent = result.key;
-                document.getElementById('keyExpires').textContent = result.expires;
-                document.getElementById('keyModal').style.display = 'flex';
-                document.getElementById('clientName').value = '';
-                loadLicenses();
-            } else {
-                alert('Erro: ' + (result.error || 'Desconhecido'));
-            }
-        }
-        
-        async function loadLicenses() {
-            const licenses = await apiCall('list');
-            const container = document.getElementById('licensesList');
-            
-            if (!licenses || licenses.error) {
-                container.innerHTML = '<div class="loading">Erro ao carregar</div>';
-                return;
-            }
-            
-            if (licenses.length === 0) {
-                container.innerHTML = '<div class="loading">Nenhuma licença</div>';
-                return;
-            }
-            
-            let html = '  </thead>\n<thead>\n<th>Chave</th><th>Cliente</th><th>Status</th><th>Expira</th><th>Ativada</th>\n</thead>\n<tbody>';
-            licenses.forEach(lic => {
-                let statusClass = lic.status === 'active' ? 'status-active' : 'status-revoked';
-                let statusText = lic.status === 'active' ? 'Ativa' : 'Revogada';
-                html += `\n<tr>\n<td><code>${lic.key}</code></td>\n<td>${lic.client}</td>\n<td class="${statusClass}">${statusText}</td>\n<td>${lic.expires}</td>\n<td>${lic.activated_at ? 'Sim' : 'Não'}</td>\n</tr>`;
-            });
-            html += '\n</tbody>\n</table>';
-            container.innerHTML = html;
-        }
-        
-        function copyKey() {
-            const key = document.getElementById('generatedKey').textContent;
-            navigator.clipboard.writeText(key);
-            alert('Chave copiada!');
-        }
-        
-        function closeModal() {
-            document.getElementById('keyModal').style.display = 'none';
-        }
-        
-        loadLicenses();
-    </script>
+        let html = '<table><tr><th>Chave</th><th>Cliente</th><th>Status</th><th>Expira</th><th>Ativada</th></tr>';
+        lic.forEach(l => {
+            html += `<tr>
+                <td><code>${l.key}</code></td>
+                <td>${l.client}</td>
+                <td class="${l.status === 'active' ? 'status-active' : 'status-revoked'}">${l.status}</td>
+                <td>${l.expires}</td>
+                <td>${l.activated_at ? '✅' : '❌'}</td>
+            </tr>`;
+        });
+        container.innerHTML = `<table>${html}</table>`;
+    }
+
+    async function createLicense() {
+        const client = document.getElementById('clientName').value;
+        const days = document.getElementById('days').value;
+        const max_servers = document.getElementById('maxServers').value;
+        const permissions = document.getElementById('permissions').value;
+        if (!client) return alert('Nome do cliente!');
+        const res = await apiCall('create', {client, days, max_servers, permissions});
+        if (res.success) {
+            document.getElementById('generatedKey').innerText = res.key;
+            document.getElementById('keyModal').style.display = 'flex';
+            loadLicenses();
+            loadStats();
+        } else alert('Erro: ' + (res.error || 'desconhecido'));
+    }
+
+    function copyKey() {
+        const key = document.getElementById('generatedKey').innerText;
+        navigator.clipboard.writeText(key);
+        alert('Copiado!');
+    }
+    function closeModal() {
+        document.getElementById('keyModal').style.display = 'none';
+    }
+
+    loadStats();
+    loadLicenses();
+</script>
 </body>
 </html>
